@@ -70,5 +70,28 @@ def load_data_txt(path: str | Path) -> pd.DataFrame:
 
 if __name__ == "__main__":
     df = load_data_txt("src/task_1_statistics/data.txt")
-    print(df.head())
-    print(df["EVENT"].value_counts().head())
+
+    # step 1: output statistics
+    q = df.groupby("EVENT")["AVGTSMR"].quantile([0.5, 0.9, 0.99, 0.999])
+    q_df = q.unstack()
+
+    m = df.groupby("EVENT")["AVGTSMR"].min().to_frame("min")
+
+    result = q_df.join(m)
+    result = result.rename(
+        columns={
+            0.5: "50%",
+            0.9: "90%",
+            0.99: "99%",
+            0.999: "99.9%",
+        }
+    )
+    for event, row in result.iterrows():
+        print(
+            f"{event} "
+            f"min={int(row['min'])} "
+            f"50%={int(row['50%'])} "
+            f"90%={int(row['90%'])} "
+            f"99%={int(row['99%'])} "
+            f"99.9%={int(row['99.9%'])}"
+        )
