@@ -71,7 +71,7 @@ def load_data_txt(path: str | Path) -> pd.DataFrame:
 if __name__ == "__main__":
     df = load_data_txt("src/task_1_statistics/data.txt")
 
-    # step 1: output statistics
+    # ========= task 1: output statistics =========
     q = df.groupby("EVENT")["AVGTSMR"].quantile([0.5, 0.9, 0.99, 0.999])
     q_df = q.unstack()
 
@@ -95,3 +95,24 @@ if __name__ == "__main__":
             f"99%={int(row['99%'])} "
             f"99.9%={int(row['99.9%'])}"
         )
+
+    # ========= task 2: output ExecTime bucket table =========
+    df["ExecTime"] = (df["AVGTSMR"] // 5) * 5
+
+    table = (
+        df["ExecTime"]
+        .value_counts()
+        .sort_index()
+        .to_frame("TransNo")
+        .reset_index(names="ExecTime")
+    )
+
+    total = table["TransNo"].sum()
+
+    # weight,%: percent of total txs in this ExecTime bucket
+    table["Weight,%"] = table["TransNo"] / total * 100
+
+    # persent: cumulative persent of txs with ExecTime <= current bucket
+    table["Percent"] = (table["TransNo"].cumsum() / total) * 100
+
+    print(table.round(2).to_string(index=False))
