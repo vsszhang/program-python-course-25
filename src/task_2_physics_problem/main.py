@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.animation import FuncAnimation
 
 
 def apply_dirichlet(u: np.ndarray) -> None:
@@ -129,6 +130,52 @@ def run_preview_frames(
         u = step_ftcs(u, k, dt, dx, dy)
 
 
+def run_animation(
+    u0: np.ndarray,
+    k: float,
+    dt: float,
+    dx: float,
+    dy: float,
+    t_end: float,
+    vis_every: int,
+):
+    n_steps = int(t_end / dt)
+    frames = max(1, n_steps // vis_every)
+
+    u = u0.copy()
+
+    # Fix color scale to avoid re-scaling each frame
+    vmin, vmax = 0.0, float(u0.max()) * 0.1
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(
+        u.T,
+        origin="lower",
+        extent=[0, 1, 0, 1],
+        vmin=vmin,
+        vmax=vmax,
+        aspect="auto",
+    )
+    fig.colorbar(im, ax=ax, label="temperature")
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    title = ax.set_title("")
+
+    def update(frame_idx: int):
+        nonlocal u
+        for _ in range(vis_every):
+            u = step_ftcs(u, k, dt, dx, dy)
+
+        # Update the image once per frame (after advancing vis_every steps)
+        im.set_data(u.T)
+        title.set_text(f"Temperature field, t={(frame_idx * vis_every * dt):.6f}")
+        return (im, title)
+
+    ani = FuncAnimation(fig, update, frames=frames, interval=30, blit=False)
+    return fig, ani
+
+
 def main():
     # ---- parameters ----
     Lx = Ly = 1.0
@@ -145,13 +192,10 @@ def main():
     print("dx = ", dx)
     print("dt = ", dt)
 
-    # ---- visual checks ----
-    preview_initial(u0)
-
     # ---- step-5 preview ----
-    t_end = 0.01
-    vis_every = 50
-    run_preview_frames(u0, k, dt, dx, dy, t_end, vis_every)
+    t_end = 0.05
+    vis_every = 10
+    fig, ani = run_animation(u0, k, dt, dx, dy, t_end, vis_every)
 
     plt.show()
 
