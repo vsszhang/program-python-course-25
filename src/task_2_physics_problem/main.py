@@ -27,14 +27,6 @@ u[-1, :] = 0
 u[:, 0] = 0
 u[:, -1] = 0
 
-# quick look
-plt.imshow(u.T, origin="lower", extent=[0, 1, 0, 1])
-plt.colorbar(label="temperature")
-plt.title("Initial temperature (t=0)")
-plt.xlabel("x")
-plt.ylabel("y")
-# plt.show()
-
 dt = 0.8 * (dx**2 / (4 * k))
 u_new = u.copy()
 
@@ -52,3 +44,39 @@ u_new[:, -1] = 0
 
 print("max before: ", u.max())
 print("max after: ", u_new.max())
+
+# ---- simulation params ---
+t_end = 0.01
+n_steps = int(t_end / dt)
+vis_every = 50
+
+u_cur = u.copy()
+
+plt.figure()
+for n in range(n_steps + 1):
+    # update one step
+    u_new = u_cur.copy()
+    u_new[1:-1, 1:-1] = u_cur[1:-1, 1:-1] + k * dt * (
+        (u_cur[2:, 1:-1] - 2 * u_cur[1:-1, 1:-1] + u_cur[:-2, 1:-1]) / dx**2
+        + (u_cur[1:-1, 2:] - 2 * u_cur[1:-1, 1:-1] + u_cur[1:-1, :-2]) / dy**2
+    )
+
+    # Dirichlet boundary
+    u_new[0, :] = 0
+    u_new[-1, :] = 0
+    u_new[:, 0] = 0
+    u_new[:, -1] = 0
+
+    u_cur = u_new
+
+    # visualize
+    if n % vis_every == 0:
+        plt.clf()
+        im = plt.imshow(u_cur.T, origin="lower", extent=[0, 1, 0, 1])
+        plt.colorbar(im, label="temperature")
+        plt.title(f"Temperature field, step={n}, t={n * dt:.6f}")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.pause(0.001)
+
+plt.show()
