@@ -3,7 +3,7 @@ This is a uv python project for FKI MSU 2025 python course assignment.
 
 The assignment have three tasks:
 - Task 1: statistics (with Pandas)
-- Task 2: 🚧
+- Task 2: physics problem (with NumPy, Matplotlib)
 - Task 3: 🚧
 
 This project is based on a [uv](https://docs.astral.sh/uv/) monorepo scaffold, so make sure u are already install the uv!
@@ -25,5 +25,8 @@ uv sync --all-packages
 Choose one script and run the following command.
 ```bash
 # Task 1
-uv run --package task_1_statistics ./src/task_1_statistics/main.py
+uv run --package task-1-statistics ./src/task_1_statistics/main.py
+
+# Task 2
+uv run --package task-2-physics-problem ./src/task_2_physics_problem/main.py
 ```
