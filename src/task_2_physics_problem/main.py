@@ -1,82 +1,160 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# ---- parameters ----
-Lx = Ly = 1.0
-nx = ny = 101  # number of grid point
-k = 1.0  # thermal diffusivity
 
-dx = Lx / (nx - 1)
-dy = Ly / (ny - 1)
+def apply_dirichlet(u: np.ndarray) -> None:
+    """Dirichlet BC: u=0 on the boundary (in-place)
 
-# ---- grid ----
-x = np.linspace(0, Lx, nx)
-y = np.linspace(0, Ly, ny)
-X, Y = np.meshgrid(x, y, indexing="ij")
+    Args:
+        u (np.ndarray): numpy array
+    """
+    u[0, :] = 0
+    u[-1, :] = 0
+    u[:, 0] = 0
+    u[:, -1] = 0
 
-# ---- initial condition: narrow Gaussian at center (normalized) ----
-x0, y0 = 0.5, 0.5
-sigma = 0.03
-u = np.exp(-((X - x0) ** 2 + (Y - y0) ** 2) / (2 * sigma**2))
 
-# normalize
-u = u / (u.sum() * dx * dy)
+def make_grid(Lx: float, Ly: float, nx: int, ny: int):
+    """Make grid
 
-u[0, :] = 0
-u[-1, :] = 0
-u[:, 0] = 0
-u[:, -1] = 0
+    Args:
+        Lx (float): number of grid point
+        Ly (float):
+        nx (int): number of grid point
+        ny (int): number of grid point
 
-dt = 0.8 * (dx**2 / (4 * k))
-u_new = u.copy()
+    Returns:
+        tuple: grid info
+    """
+    dx = Lx / (nx - 1)
+    dy = Ly / (ny - 1)
+    x = np.linspace(0, Lx, nx)
+    y = np.linspace(0, Ly, ny)
+    X, Y = np.meshgrid(x, y, indexing="ij")
+    return x, y, X, Y, dx, dy
 
-# FTCS update: only interior points (Dirichlet boundary kept as 0)
-u_new[1:-1, 1:-1] = u[1:-1, 1:-1] + k * dt * (
-    (u[2:, 1:-1] - 2 * u[1:-1, 1:-1] + u[:-2, 1:-1]) / dx**2
-    + (u[1:-1, 2:] - 2 * u[1:-1, 1:-1] + u[1:-1, :-2]) / dy**2
-)
 
-# enforce Dirichlet boundary explicitly
-u_new[0, :] = 0
-u_new[-1, :] = 0
-u_new[:, 0] = 0
-u_new[:, -1] = 0
+def make_initial_condition(X: np.ndarray, Y: np.ndarray, dx: float, dy: float):
+    """Narrow Gaussian centered at (0.5, 0.5), normalized so sum*dx*dy ~= 1
 
-print("max before: ", u.max())
-print("max after: ", u_new.max())
+    Args:
+        X (np.ndarray): X
+        Y (np.ndarray): Y
+        dx (float): dx
+        dy (float): dy
+    """
+    # initial condition: narrow Gaussian at center (normalized)
+    x0, y0 = 0.5, 0.5
+    sigma = 0.03
+    u0 = np.exp(-((X - x0) ** 2 + (Y - y0) ** 2) / (2 * sigma**2))
 
-# ---- simulation params ---
-t_end = 0.01
-n_steps = int(t_end / dt)
-vis_every = 50
+    # normalize
+    u0 = u0 / (u0.sum() * dx * dy)
+    apply_dirichlet(u0)
+    return u0
 
-u_cur = u.copy()
 
-plt.figure()
-for n in range(n_steps + 1):
-    # update one step
-    u_new = u_cur.copy()
-    u_new[1:-1, 1:-1] = u_cur[1:-1, 1:-1] + k * dt * (
-        (u_cur[2:, 1:-1] - 2 * u_cur[1:-1, 1:-1] + u_cur[:-2, 1:-1]) / dx**2
-        + (u_cur[1:-1, 2:] - 2 * u_cur[1:-1, 1:-1] + u_cur[1:-1, :-2]) / dy**2
+def choose_dt_ftcs(k: float, dx: float, dy: float, safety: float = 0.8) -> float:
+    """Stable dt for 2D FTCS heat equation with a safety factor
+
+    Args:
+        k (float): _description_
+        dx (float): _description_
+        dy (float): _description_
+        safety (float, optional): _description_. Defaults to 0.8.
+
+    Returns:
+        float: _description_
+    """
+    dt_max = 1.0 / (2.0 * k * (1.0 / dx**2 + 1.0 / dy**2))
+    return safety * dt_max
+
+
+def step_ftcs(u: np.ndarray, k: float, dt: float, dx: float, dy: float) -> np.ndarray:
+    """One FTCS step. Returns a new array; does not modify input.
+
+    Args:
+        u (np.ndarray): _description_
+        k (float): _description_
+        dt (float): _description_
+        dx (float): _description_
+        dy (float): _description_
+
+    Returns:
+        np.ndarray: _description_
+    """
+    u_new = u.copy()
+
+    # FTCS update: only interior points (Dirichlet boundary kept as 0)
+    u_new[1:-1, 1:-1] = u[1:-1, 1:-1] + k * dt * (
+        (u[2:, 1:-1] - 2 * u[1:-1, 1:-1] + u[:-2, 1:-1]) / dx**2
+        + (u[1:-1, 2:] - 2 * u[1:-1, 1:-1] + u[1:-1, :-2]) / dy**2
     )
+    apply_dirichlet(u_new)
+    return u_new
 
-    # Dirichlet boundary
-    u_new[0, :] = 0
-    u_new[-1, :] = 0
-    u_new[:, 0] = 0
-    u_new[:, -1] = 0
 
-    u_cur = u_new
+def preview_initial(u0: np.array):
+    plt.figure()
+    plt.imshow(u0.T, origin="lower", extent=[0, 1, 0, 1])
+    plt.colorbar(label="temperature")
+    plt.title("Initial temperature (t=0)")
+    plt.xlabel("x")
+    plt.ylabel("y")
 
-    # visualize
-    if n % vis_every == 0:
-        plt.clf()
-        im = plt.imshow(u_cur.T, origin="lower", extent=[0, 1, 0, 1])
-        plt.colorbar(im, label="temperature")
-        plt.title(f"Temperature field, step={n}, t={n * dt:.6f}")
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.pause(0.001)
 
-plt.show()
+def run_preview_frames(
+    u0: np.ndarray,
+    k: float,
+    dt: float,
+    dx: float,
+    dy: float,
+    t_end: float,
+    vis_every: int,
+):
+    n_steps = int(t_end / dt)
+    u = u0.copy()
+
+    plt.figure()
+    for n in range(n_steps + 1):
+        # visualize
+        if n % vis_every == 0:
+            plt.clf()
+            im = plt.imshow(u.T, origin="lower", extent=[0, 1, 0, 1])
+            plt.colorbar(im, label="temperature")
+            plt.title(f"Temperature field, step={n}, t={n * dt:.6f}")
+            plt.xlabel("x")
+            plt.ylabel("y")
+            plt.pause(0.001)
+        u = step_ftcs(u, k, dt, dx, dy)
+
+
+def main():
+    # ---- parameters ----
+    Lx = Ly = 1.0
+    nx = ny = 101
+
+    k = 1.0
+
+    # ---- grid + init ----
+    _, _, X, Y, dx, dy = make_grid(Lx, Ly, nx, ny)
+    u0 = make_initial_condition(X, Y, dx, dy)
+
+    #  ---- dt (stable) ----
+    dt = choose_dt_ftcs(k, dx, dy, safety=0.8)
+    print("dx = ", dx)
+    print("dt = ", dt)
+
+    # ---- visual checks ----
+    preview_initial(u0)
+
+    # ---- step-5 preview ----
+    t_end = 0.01
+    vis_every = 50
+    run_preview_frames(u0, k, dt, dx, dy, t_end, vis_every)
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
