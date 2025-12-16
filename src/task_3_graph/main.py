@@ -1,7 +1,51 @@
 import json
 import tkinter as tk
+from collections import defaultdict
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Combobox
+
+import networkx as nx
+
+
+def build_actor_graph(data: dict) -> nx.Graph:
+    """Build an actor collaboration graph from movies.json data.
+
+       Nodes: actor names
+       Edges: actors who appeared together in at least one movie
+       Edge attribute:
+            movies = [(title, year), ...]
+
+    Args:
+        data (dict): json with dict type
+
+    Returns:
+        nx.Graph: Networkx Graph
+    """
+    G = nx.Graph()
+
+    # add all actors as nodes
+    for actor in data.keys():
+        G.add_node(actor)
+
+    # build movie -> actors reverse index
+    movie_to_actors = defaultdict(list)
+    for actor, movies in data.items():
+        for movie in movies:
+            title = movie["title"]
+            year = int(movie["airdate"][:4])
+            movie_key = (title, year)
+            movie_to_actors[movie_key].append(actor)
+
+    # connect actors who played in the same movie
+    for (title, year), actors in movie_to_actors.items():
+        for i in range(len(actors)):
+            for j in range(i + 1, len(actors)):
+                a1, a2 = actors[i], actors[j]
+                if not G.has_edge(a1, a2):
+                    G.add_edge(a1, a2, movies=[])
+                G[a1][a2]["movies"].append((title, year))
+
+    return G
 
 
 class BaconGUI(tk.Tk):
@@ -11,6 +55,7 @@ class BaconGUI(tk.Tk):
         self.geometry("520x160")
 
         self.data = None
+        self.graph = None
 
         # ---- UI ----
         self.btn_load = tk.Button(self, text="load", command=self.on_load)
@@ -50,6 +95,7 @@ class BaconGUI(tk.Tk):
                 raise ValueError("No actors found in JSON keys.")
 
             self.data = data
+            self.graph = build_actor_graph(data)
             self.combo["values"] = actors
             self.combo.set(actors[0])
             self.lbl_file.config(text=f"Loaded: {path}", fg="black")
