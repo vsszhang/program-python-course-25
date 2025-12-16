@@ -10,4 +10,5 @@ dependencies = []
 members = [
     "src/task_1_statistics",
     "src/task_2_physics_problem",
+    "src/task_3_graph",
 ]
