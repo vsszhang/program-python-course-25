@@ -48,11 +48,25 @@ def build_actor_graph(data: dict) -> nx.Graph:
     return G
 
 
+def shortest_actor_graph(
+    graph: nx.Graph, actor: str, target: str = "Kevin Bacon"
+) -> list[str] | None:
+    if graph is None:
+        return None
+    if actor not in graph or target not in graph:
+        return None
+
+    try:
+        return nx.shortest_path(graph, source=actor, target=target)
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return None
+
+
 class BaconGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bacon Number")
-        self.geometry("520x160")
+        self.geometry("520x240")
 
         self.data = None
         self.graph = None
@@ -65,12 +79,35 @@ class BaconGUI(tk.Tk):
 
         self.combo = Combobox(self, state="readonly", width=50, values=[])
         self.combo.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+        self.combo.bind("<<ComboboxSelected>>", self.on_actor_selected)
 
         self.lbl_file = tk.Label(self, text="No file loaded", fg="gray")
         self.lbl_file.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="w")
 
+        self.lbl_path = tk.Label(
+            self, text="Path: (select an actor)", justify="left", wraplength=500
+        )
+        self.lbl_path.grid(
+            row=3, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="w"
+        )
+
         # grid stretching
         self.grid_columnconfigure(1, weight=1)
+
+    def on_actor_selected(self, event=None):
+        actor = self.combo.get()
+        if not actor or self.graph is None:
+            return
+
+        path = shortest_actor_graph(self.graph, actor, "Kevin Bacon")
+        if path is None:
+            self.lbl_path.config(text=f"Path: no path from {actor} to Kevin Bacon")
+            return
+
+        bacon_number = len(path) - 1
+        self.lbl_path.config(
+            text=f"Path: {' -> '.join(path)}\nBacon number: {bacon_number}"
+        )
 
     def on_load(self):
         path = filedialog.askopenfilename(
@@ -98,6 +135,7 @@ class BaconGUI(tk.Tk):
             self.graph = build_actor_graph(data)
             self.combo["values"] = actors
             self.combo.set(actors[0])
+            self.on_actor_selected()
             self.lbl_file.config(text=f"Loaded: {path}", fg="black")
 
         except Exception as e:
