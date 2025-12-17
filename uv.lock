@@ -524,11 +524,15 @@ name = "task-3-graph"
 version = "0.1.0"
 source = { virtual = "src/task_3_graph" }
 dependencies = [
+    { name = "matplotlib" },
     { name = "networkx" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "networkx", specifier = ">=3.6.1" }]
+requires-dist = [
+    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "networkx", specifier = ">=3.6.1" },
+]
 
 [[package]]
 name = "tzdata"
