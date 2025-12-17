@@ -4,7 +4,12 @@ from collections import defaultdict
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Combobox
 
+import matplotlib
 import networkx as nx
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+matplotlib.use("TkAgg")
 
 
 def build_actor_graph(data: dict) -> nx.Graph:
@@ -66,10 +71,11 @@ class BaconGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bacon Number")
-        self.geometry("520x240")
+        self.geometry("900x520")
 
         self.data = None
         self.graph = None
+        self.pos = None
 
         # ---- UI ----
         self.btn_load = tk.Button(self, text="load", command=self.on_load)
@@ -91,8 +97,66 @@ class BaconGUI(tk.Tk):
             row=3, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="w"
         )
 
+        # graph view (matplotlib embedded in Tkinter)
+        self.fig = Figure(figsize=(8.6, 3.6), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_axis_off()
+        self.fig.tight_layout(pad=0.2)
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.get_tk_widget().grid(
+            row=4, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="nsew"
+        )
+
         # grid stretching
         self.grid_columnconfigure(1, weight=1)
+        self.rowconfigure(4, weight=1)
+
+    def draw_graph(self, path: list[str] | None = None):
+        """Draw the whole actor graph, and optionally highlight the given shortest path.
+           Path is a list of actor names like: ["A", "B", ..., "Kevin Bacon"]
+
+        Args:
+            path (list[str] | None, optional): NetworkX Graph. Defaults to None.
+        """
+        if self.graph is None or self.pos is None:
+            return
+
+        self.ax.clear()
+        self.ax.set_axis_off()
+        self.fig.tight_layout(pad=0.2)
+
+        # base layer: all edges + nodes
+        nx.draw_networkx_edges(
+            self.graph, pos=self.pos, ax=self.ax, width=1.0, alpha=0.3
+        )
+        nx.draw_networkx_nodes(
+            self.graph, pos=self.pos, ax=self.ax, node_size=300, alpha=0.8
+        )
+        nx.draw_networkx_labels(self.graph, pos=self.pos, ax=self.ax, font_size=8)
+
+        # highlight layer: path edges + nodes
+        if path and len(path) >= 2:
+            path_edges = list(zip(path[:-1], path[1:]))
+            nx.draw_networkx_edges(
+                self.graph, pos=self.pos, ax=self.ax, edgelist=path_edges, width=3.0
+            )
+            nx.draw_networkx_nodes(
+                self.graph, pos=self.pos, ax=self.ax, nodelist=path, node_size=450
+            )
+
+        # auto-zoom to the graph extends (reduce empty whitespace)
+        xs = [p[0] for p in self.pos.values()]
+        ys = [p[1] for p in self.pos.values()]
+        if xs and ys:
+            pad = 0.15
+            xmin, xmax = min(xs), max(xs)
+            ymin, ymax = min(ys), max(ys)
+            dx = (xmax - xmin) or 1.0
+            dy = (ymax - ymin) or 1.0
+            self.ax.set_xlim(xmin - pad * dx, xmax + pad * dx)
+            self.ax.set_ylim(ymin - pad * dy, ymax + pad * dy)
+        self.canvas.draw()
 
     def on_actor_selected(self, event=None):
         actor = self.combo.get()
@@ -102,12 +166,14 @@ class BaconGUI(tk.Tk):
         path = shortest_actor_graph(self.graph, actor, "Kevin Bacon")
         if path is None:
             self.lbl_path.config(text=f"Path: no path from {actor} to Kevin Bacon")
+            self.draw_graph(None)
             return
 
         bacon_number = len(path) - 1
         self.lbl_path.config(
             text=f"Path: {' -> '.join(path)}\nBacon number: {bacon_number}"
         )
+        self.draw_graph(path)
 
     def on_load(self):
         path = filedialog.askopenfilename(
@@ -133,6 +199,8 @@ class BaconGUI(tk.Tk):
 
             self.data = data
             self.graph = build_actor_graph(data)
+            self.pos = nx.spring_layout(self.graph, seed=0, k=1.2, iterations=200)
+            self.draw_graph(None)
             self.combo["values"] = actors
             self.combo.set(actors[0])
             self.on_actor_selected()
