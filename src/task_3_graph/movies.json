@@ -1,0 +1,51 @@
+{
+  "Kevin Bacon": [
+    {"title": "Footloose", "airdate": "1984-02-17"},
+    {"title": "A Few Good Men", "airdate": "1992-12-11"},
+    {"title": "Apollo 13", "airdate": "1995-06-30"},
+    {"title": "X-Men: First Class", "airdate": "2011-06-01"},
+    {"title": "Black Mass", "airdate": "2015-09-04"}
+  ],
+  "Natalie Portman": [
+    {"title": "Black Swan", "airdate": "2010-09-01"},
+    {"title": "V for Vendetta", "airdate": "2006-03-17"},
+    {"title": "The Phantom Menace", "airdate": "1999-05-19"},
+    {"title": "The Other Boleyn Girl", "airdate": "2008-02-29"}
+  ],
+  "Scarlett Johansson": [
+    {"title": "Lost in Translation", "airdate": "2003-08-29"},
+    {"title": "The Avengers", "airdate": "2012-04-11"},
+    {"title": "Marriage Story", "airdate": "2019-08-29"},
+    {"title": "The Other Boleyn Girl", "airdate": "2008-02-29"}
+  ],
+  "Johnny Depp": [
+    {"title": "Pirates of the Caribbean", "airdate": "2003-07-09"},
+    {"title": "Edward Scissorhands", "airdate": "1990-12-06"},
+    {"title": "Sweeney Todd", "airdate": "2007-12-21"},
+    {"title": "The Tourist", "airdate": "2010-12-10"},
+    {"title": "Black Mass", "airdate": "2015-09-04"}
+  ],
+  "Angelina Jolie": [
+    {"title": "Maleficent", "airdate": "2014-05-28"},
+    {"title": "Lara Croft: Tomb Raider", "airdate": "2001-06-15"},
+    {"title": "Wanted", "airdate": "2008-06-27"},
+    {"title": "The Tourist", "airdate": "2010-12-10"}
+  ],
+  "James McAvoy": [
+    {"title": "Atonement", "airdate": "2007-08-29"},
+    {"title": "Split", "airdate": "2016-09-26"},
+    {"title": "X-Men: First Class", "airdate": "2011-06-01"},
+    {"title": "Wanted", "airdate": "2008-06-27"}
+  ],
+  "Robert Downey Jr.": [
+    {"title": "Wonder Boys", "airdate": "2000-02-22"},
+    {"title": "Kiss Kiss Bang Bang", "airdate": "2005-09-05"},
+    {"title": "Sherlock Holmes", "airdate": "2009-12-25"}
+  ],
+  "Benedict Cumberbatch": [
+    {"title": "The Other Boleyn Girl", "airdate": "2008-02-29"},
+    {"title": "Black Mass", "airdate": "2015-09-04"},
+    {"title": "The Imitation Game", "airdate": "2014-11-14"},
+    {"title": "Doctor Strange", "airdate": "2016-10-20"}
+  ]
+}
