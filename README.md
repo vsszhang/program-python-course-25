@@ -4,7 +4,7 @@ This is a uv python project for FKI MSU 2025 python course assignment.
 The assignment have three tasks:
 - Task 1: statistics (with Pandas)
 - Task 2: physics problem (with NumPy, Matplotlib)
-- Task 3: 🚧
+- Task 3: graph GUI (with Tkinter, NetworkX, Matplotlib)
 
 This project is based on a [uv](https://docs.astral.sh/uv/) monorepo scaffold, so make sure u are already install the uv!
 
@@ -29,4 +29,7 @@ uv run --package task-1-statistics ./src/task_1_statistics/main.py
 
 # Task 2
 uv run --package task-2-physics-problem ./src/task_2_physics_problem/main.py
+
+# Task 3
+uv run --package task-3-graph ./src/task_3_graph/main.py
 ```
