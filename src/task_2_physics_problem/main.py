@@ -37,6 +37,7 @@ def make_grid(Lx: float, Ly: float, nx: int, ny: int):
 
 def make_initial_condition(X: np.ndarray, Y: np.ndarray, dx: float, dy: float):
     """Narrow Gaussian centered at (0.5, 0.5), normalized so sum*dx*dy ~= 1
+       Constructing the initial temperature field
 
     Args:
         X (np.ndarray): X
@@ -57,6 +58,7 @@ def make_initial_condition(X: np.ndarray, Y: np.ndarray, dx: float, dy: float):
 
 def choose_dt_ftcs(k: float, dx: float, dy: float, safety: float = 0.8) -> float:
     """Stable dt for 2D FTCS heat equation with a safety factor
+       Calculate the stable time step `dt`
 
     Args:
         k (float): _description_
